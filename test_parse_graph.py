@@ -1,5 +1,5 @@
 import unittest
-from ../dijkstra import parse_graph
+from dijkstra import parse_graph
 
 expected_graph = {'a': {'b': 7, 'd': 9, 'c': 14},
      'b': {'d': 10, 'e': 15},
