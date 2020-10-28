@@ -32,3 +32,18 @@ def reachables(graph, s):
       a set of vertices in graph
     """
     return set() # TODO: votre code ici !
+
+
+def shortest_distance(graph, v1, v2):
+    """
+    this function computes the length of the shortest path
+    in graph between v1 and v2
+
+    Parameters:
+      graph: a graph described as a dictionary of dictionaries
+      v1: the source vertex
+      v2: the destination vertex
+    Returns:
+      int: the length of the shortest path, or None
+    """
+    return None
