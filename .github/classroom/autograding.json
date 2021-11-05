@@ -1,0 +1,74 @@
+{
+  "tests": [
+    {
+      "name": "parse graph",
+      "setup": "",
+      "run": "python3 -m unittest test_parse_graph",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 1
+    },
+    {
+      "name": "number vertices: simple",
+      "setup": "",
+      "run": "python3 -m unittest test_number_vertices",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 1
+    },
+    {
+      "name": "number vertices: loop",
+      "setup": "",
+      "run": "python3 -m unittest test_number_vertices_loop",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 1
+    },
+    {
+      "name": "reachables: simple",
+      "setup": "",
+      "run": "python3 -m unittest test_reachables_simple",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 1
+    },
+    {
+      "name": "reachables: loop",
+      "setup": "",
+      "run": "python3 -m unittest test_reachables_loop",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 1
+    },
+    {
+      "name": "shortest distance",
+      "setup": "",
+      "run": "python3 -m unittest test_shortest_distance",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 3
+    },
+    {
+      "name": "game of thrones",
+      "setup": "",
+      "run": "python3 -m unittest test_thrones",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 1,
+      "points": 3
+    }
+  ]
+}
