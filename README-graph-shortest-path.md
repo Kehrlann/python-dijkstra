@@ -1,10 +1,46 @@
-# python-dijkstra
+---
+jupytext:
+  cell_metadata_filter: all,-hidden,-heading_collapsed,-run_control,-trusted
+  encoding: '# -*- coding: utf-8 -*-'
+  notebook_metadata_filter: all, -jupytext.text_representation.jupytext_version, -jupytext.text_representation.format_version,
+    -language_info.version, -language_info.codemirror_mode.version, -language_info.codemirror_mode,
+    -language_info.file_extension, -language_info.mimetype, -toc
+  text_representation:
+    extension: .md
+    format_name: myst
+kernelspec:
+  display_name: Python 3 (ipykernel)
+  language: python
+  name: python3
+language_info:
+  name: python
+  nbconvert_exporter: python
+  pygments_lexer: ipython3
+nbhosting:
+  title: algos de graphe
+rise:
+  autolaunch: true
+  slideNumber: c/t
+  start_slideshow_at: selected
+  theme: sky
+  transition: cube
+version: '1.0'
+---
 
-Dijkstra... en Python!
+<div class="licence">
+<span>Licence CC BY-NC-ND</span>
+<span>Thierry Parmentelat</span>
+<span><img src="media/inria-25-alpha.png" /></span>
+</div>
 
-## Introduction
 
-Dans ce TP nous allons
+# TP - algos de base sur les graphes
+
+
+## introduction
+
+
+dans ce TP nous allons
 
 * étudier quelques algorithmes de base des graphes
 * et les implémenter
@@ -16,47 +52,20 @@ et pour cela nous aurons besoin
 
 comme nous n'avons pas encore étudié les classes, nous allons nous restreindre à utiliser uniquement les types de base de Python - listes, tuples, dictionnaires et ensembles
 
+
 ## *disclaimer*
 
+
 les problèmes abordés dans ce TP, et notamment le calcul du plus court chemin, sont trés classiques; notre objectif ici est juste de **découvrir le sujet**, et de prendre ce prétexte pour utiliser les dictionnaires et ensembles dans un contexte moins factice que les exercices, **sans essayer de produire une implémentation optimale** - loin s'en faut, comme on le verra bien dans la dernière partie d'ailleurs.
-
-## Instructions pour le rendu
-
-Copiez votre code dans les différentes fonctions de `dijkstra.py`.
-
-Attention, il ne faut pas changer le nom de la fonction. Vous pouvez changer les arguments,
-mais la fonction doit fonctionner avec le nombre initial d'arguments. Par exemple, vous
-pouvez changer `def reachables(grap, s)` en `def reachables(graph, s, foo=None, bar=2)`.
-
-Exécutez les tests en local (cf ci-dessous).
-
-Quand le résultat est satisfaisant, git add, git commit, git push:
-
-```shell
-$ git add dijkstra.py
-$ git commit --message "parse graph, v1"
-$ git push
-```
-
-Pour exécuter les tests localement:
-
-```shell
-$ python grader.py
-```
-
-Il est courant de se tromper et de faire des boucles infinies dans son code. Dans ce cas,
-les tests n'arriveront jamais "au bout". Appuyez sur `Ctrl + C` pour interrompre le grader.
-
-Sans plus attendre, l'exercice!
 
 
 ## formalisation
 
-nous nous intéressons aux graphes **valués**, qu'on peut définir formellement comme un triplet `G =(V, E, W)`, où
+nous nous intéressons aux graphes **valués**, qu'on peut définir formellement comme un triplet $G =(V, E, W)$, où
 
-* `V` est un ensemble quelconque, qu'on appelle l'ensemble des sommets (*vertices*) du graphe,
-* `E` est une partie de `V x V`; les couples `(v_1, v_2)` dans `E` s'appellent les arêtes (*edges*) du graphe
-* `W` est une fonction `E -> ℕ`, qui attache à chaque arête une valeur entière, un poids (*weight*), qui peut être interprété aussi selon les usages comme une distance entre les sommets concernés; ou tout autre chose d'ailleurs, par exemple une durée…
+* $V$ est un ensemble quelconque, qu'on appelle l'ensemble des sommets (*vertices*) du graphe,
+* $E$ est une partie de $V\times V$; les couples $(v_1, v_2)$ dans $E$ s'appellent les arêtes (*edges*) du graphe
+* $W$ est une fonction $E\rightarrow\mathbb{N}$, qui attache à chaque arête une valeur entière, un poids (*weight*), qui peut être interprété aussi selon les usages comme une distance entre les sommets concernés; ou tout autre chose d'ailleurs, par exemple une durée…
 
 ![](media/graph.png)
 
@@ -70,7 +79,9 @@ quelles options voyez-vous pour modéliser un graphe par un objet Python ?
 
 ### liste de listes
 
-```python
+```{code-cell} ipython3
+:cell_style: split
+
 # par exemple
 graph_as_list = [
   ['a', 14, 'c'],
@@ -98,7 +109,9 @@ pensez-vous que cette structure soit adaptée ?
 
 si on veut coder le graphe comme une matrice, on a besoin aussi de garder les noms des sommets
 
-```python
+```{code-cell} ipython3
+:cell_style: split
+
 # par exemple
 import numpy as np
 graph_as_matrix = (
@@ -126,7 +139,9 @@ pensez-vous que cette structure soit adaptée ?
 
 ### autres idées ?
 
-```python
+```{code-cell} ipython3
+:cell_style: split
+
 # comment feriez-vous ?
 my_graph = ...
 ```
@@ -150,18 +165,13 @@ dans notre cas, nous allons choisir la forme la plus simple possible :
 * une ligne par arête
 * sous la forme *`source, destination, poids`*
 
-ce qui donnerait (par exemple) pour notre graphe témoin (dans le fichier `graph.csv` dans ce repo):
+ce qui donnerait (par exemple) pour notre graphe témoin :
 
-```
-a,b,7
-a,d,9
-a,c,14
-b,d,10
-b,e,15
-c,d,2
-c,f,9
-d,e,11
-e,f,6
+```{code-cell} ipython3
+:cell_style: split
+
+# une façon de sauver le graphe 
+!cat data/graph.csv
 ```
 
 
@@ -185,7 +195,9 @@ pour éviter les inconvénients des listes et des matrices, on va représenter u
   * où chaque clé est un sommet (d'arrivée)
   * et où chaque valeur est un poids
 
-```python
+```{code-cell} ipython3
+:cell_style: split
+
 # pour notre graphe on veut construire 
 G = {'a': {'b': 7, 'd': 9, 'c': 14},
      'b': {'d': 10, 'e': 15},
@@ -204,18 +216,25 @@ G = {'a': {'b': 7, 'd': 9, 'c': 14},
 * pour transformer la chaine '12' en entier, on peut appeler `int('12')`  
 * lorsqu'on lit un fichier ligne à ligne, on utilise souvent `str.strip()` pour la "nettoyer" c'est-à-dire enlever les espaces et autres fin de ligne au début et à la fin de la ligne
 
-```python
->>> 'a,b,12'.split(',')
-['a', 'b', '12']
->>> ' a,b,12\n'.strip()
-'a,b,12'
->>> int('12 ')
-12
+```{code-cell} ipython3
+:cell_style: split
+
+'a,b,12'.split(',')
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+' a,b,12\n'.strip()
+```
+
+```{code-cell} ipython3
+int('12 ')
 ```
 
 ### exo #1
 
-```python
+```{code-cell} ipython3
 # à vous d'écrire cette fonction
 def parse_graph(filename):
     ...
@@ -224,53 +243,51 @@ def parse_graph(filename):
 pour vérifier, inspectez visuellement votre résultat  
 vérifiez aussi/surtout que les poids sont bien **des entiers** et pas des chaines
 
-```python
+```{code-cell} ipython3
 # ceci doit vous afficher un dictionnaire de dictionnaires
 parse_graph("data/graph.csv") 
 ```
 
-Comparer le résultat à notre graphe G ci-dessus:
-
-```python
-# Résultat attendu
-{'a': {'b': 7, 'd': 9, 'c': 14},
-   'b': {'d': 10, 'e': 15},
-   'c': {'d': 2, 'f': 9},
-   'd': {'e': 11},
-   'e': {'f': 6}}
+```{code-cell} ipython3
+# et ceci doit être True
+parse_graph("data/graph.csv") == G
 ```
-
 
 ## nombre de sommets
 
 il faut souligner qu'un sommet du graphe **peut ne pas avoir d'arête sortante**  
 et dans ce cas-là, avec notre structure de données, ça signifie que ce sommet **n'apparait pas comme une clé** dans le dictionnaire
 
+```{code-cell} ipython3
+:cell_style: split
 
-```python
->>> # 'f' est bien un sommet, mais pourtant
->>> G = {'a': {'b': 7, 'd': 9, 'c': 14},
-     'b': {'d': 10, 'e': 15},
-     'c': {'d': 2, 'f': 9},
-     'd': {'e': 11},
-     'e': {'f': 6}}
->>> G['f']
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-KeyError: 'f'
+G
 ```
 
-```python
->>> # ou dit autrement
->>> 'f' in G
-False
+```{code-cell} ipython3
+:cell_style: split
+
+# 'f' est bien un sommet, mais pourtant
+
+try:
+    G['f']
+except Exception as exc:
+    print(f"OOPS {type(exc)} {exc}")
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+# ou dit autrement
+
+'f' in G
 ```
 
 ### exo #2
 
 écrivez une fonction qui retourne le nombre de sommets du graphe
 
-```python
+```{code-cell} ipython3
 def number_vertices(graph):
     """
     returns number of vertices
@@ -281,14 +298,13 @@ def number_vertices(graph):
     Returns:
       int: number of vertices
     """
-    pass
+    ...
 ```
 
-Le résultat attendu:
+```{code-cell} ipython3
+# pour vérifier
 
-```python
->>> number_vertices(G)
-6
+number_vertices(G) == 6
 ```
 
 ## atteignabilité
@@ -298,26 +314,41 @@ maintenant que nous avons une structure de données, nous allons pouvoir en fair
 
 le premier algorithme que nous allons voir consiste à calculer l'ensemble des sommets que l'on peut atteindre en partant d'un sommet donné
 
-commençons par voir un exemple, dans le fichier `reach.csv`, qui contient ce graphe:
+commençons par voir un exemple
 
-![](media/rechables.png)
+**attention** la deuxième cellule (qui appelle `to_graphviz`) peut ne pas fonctionner si vous utilisez votre ordi perso et que vous n'avez pas installé le module `graphviz`
 
-On devra trouver:
+```{code-cell} ipython3
+:cell_style: center
 
-```python
->>> reach = parse_graph("reach.csv")
->>> reachables(reach, "a")
-{'c', 'e', 'd', 'a', 'f', 'b'}
->>> reachables(reach, "b")
-{'c', 'e', 'd', 'a', 'f', 'b'}
->>> reachables(reach, "c")
-{'c', 'e', 'd', 'b', 'f', 'a'}
->>> reachables(reach, "d")
-{'c', 'e', 'd', 'b', 'f', 'a'}
->>> reachables(reach, "e")
-{'e', 'f'}
->>> reachables(reach, "f")
-{'e', 'f'}
+from graphs import parse_graph1
+
+# un graphe voisin de notre graphe témoin
+# mais avec des boucles
+# parce que sinon c'est pas drôle
+
+reach = parse_graph1("data/reach.csv")
+```
+
+```{code-cell} ipython3
+:cell_style: center
+
+# pour le visualiser
+# installer graphviz avec 
+# conda install graphviz
+# (sinon ce n'est pas du tout critique)
+from graphs import to_graphviz
+to_graphviz(reach, "neato")
+```
+
+```{code-cell} ipython3
+# voilà ce qu'on doit trouver 
+# comme sommets atteignables
+
+from graphs import reachables1
+
+for s in reach:
+    print(f"en partant de {s} → {reachables1(reach, s)}")
 ```
 
 ### la difficulté
@@ -345,31 +376,45 @@ sans transition, mais c'est sans doute le bon moment pour signaler **une limitat
 
 illustration :
 
-```python
->>> # on ne peut pas modifier, un objet sur lequel on boucle
->>> d = {'a': 'b', 'c': 'd'}
->>> for k, v in d.items():
-...     d[k+v] = v+k
-...
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-RuntimeError: dictionary changed size during iteration
->>>
->>> # c'est vrai pour tous les containers, pour ajouter ou enlever
->>> s = {'a', 'b'}
->>> for item in s:
-...     s.remove(item)
-...
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-RuntimeError: Set changed size during iteration
+```{code-cell} ipython3
+:cell_style: split
+:hide_input: false
+:tags: [raises-exception]
+
+D = {'a': 'b', 'c': 'd'}
+
+# on ne peut pas modifier
+# un objet sur lequel on boucle
+
+try:
+    for k, v in D.items():
+        D[k+v] = v+k
+except Exception as exc:
+    print(f"OOPS {type(exc)} {exc}")
+```
+
+```{code-cell} ipython3
+:cell_style: split
+:hide_input: false
+:tags: [raises-exception]
+
+S = {'a', 'b'}
+
+# c'est vrai pour tous les containers
+# pour ajouter ou enlever
+
+try:
+    for s in S:
+        S.remove(s)
+except Exception as exc:
+    print(f"OOPS {type(exc)} {exc}")
 ```
 
 ### exo #3
 
 je ne vous donne pas davantage d'indices, je vous laisse écrire ceci
 
-```python
+```{code-cell} ipython3
 # votre code 
 
 def reachables(graph, s):
@@ -382,41 +427,24 @@ def reachables(graph, s):
     Returns:
       a set of vertices in graph
     """
-    pass
+    ...
 ```
 
 ### pour vérifier
 
 vous pouvez vérifier visuellement en comparant vos résultats avec ceux qu'on a vus dans l'exemple
 
-```python
->>> reach = parse_graph("reach.csv")
->>> reachables(reach, "a")
-{'a', 'b', 'e', 'c', 'f', 'd'}
->>> reachables(reach, "b")
-{'a', 'b', 'e', 'c', 'f', 'd'}
->>> reachables(reach, "c")
-{'a', 'b', 'e', 'c', 'f', 'd'}
->>> reachables(reach, "d")
-{'a', 'b', 'e', 'c', 'f', 'd'}
->>> reachables(reach, "e")
-{'e', 'f'}
->>> reachables(reach, "f")
-{'e', 'f'}
+```{code-cell} ipython3
+for s in reach:
+    print(f"depuis {s} → {reachables(reach, s)}")
 ```
 
-```python
+```{code-cell} ipython3
 # comment écrire un petit test plus informatif
 # sur le premier graphe témoin
 
 # on énumère à la main les sommets à tester 
 # et les résultats attendus
-G = {'a': {'b': 7, 'd': 9, 'c': 14},
-     'b': {'d': 10, 'e': 15},
-     'c': {'d': 2, 'f': 9},
-     'd': {'e': 11},
-     'e': {'f': 6}}
-
 G_tests = [
     ('a', {'a', 'b', 'c', 'd', 'e', 'f'}),
     ('b', {'b', 'd', 'e', 'f'}),
@@ -456,7 +484,10 @@ et du coup si/quand on arrive au sommet d'arrivée, on a forcément trouvé le p
 
 ### illustration
 
-voici une illustration de cet algorithme, sur notre graphe témoin  **entre les noeuds `a` et `f`** dans la [vidéo media/shortest-paths.mp4](media/shortest-paths.mp4).
+voici une illustration de cet algorithme, sur notre graphe témoin  
+**entre les noeuds `a` et `f`**
+
+<video width="800px" controls src="media/shortest-paths.mp4" type="video/mp4"></video>
 
 
 ### l'algorithme
@@ -467,20 +498,20 @@ en français :
   * on a deux types de noeud : *visité* ou *non visité*
   * les noeuds visités sont marqués avec un entier qui dénote la longueur d'un chemin (du plus court chemin en fait) depuis a
   
-* au départ, seul le noeud `a` est marqué avec une distance nulle
+* au départ, seul le noeud $a$ est marqué avec une distance nulle
 
 * on fait une boucle, et à chaque tour :
   * on localise toutes les arêtes qui lient un noeud visité à un noeud non visité
-  * pour chacune de ces arêtes `s ― (w) → d`, on calcule la somme  
-    `marque(s) + w`
-  * on sélectionne l'arête `s_0 ― (w_0) → d_0` pour laquelle cette somme est la plus petite
-  * on marque `d_0` comme visité avec `marque(s_0) + w_0`
+  * pour chacune de ces arêtes $s ― (w) → d$, on calcule la somme  
+    $marque(s) + w$
+  * on sélectionne l'arête $s_0 ― (w_0) → d_0$ pour laquelle cette somme est la plus petite
+  * on marque $d_0$ comme visité avec $marque(s_0) + w_0$
 
 * on arrête la boucle lorsque, soit
-  * on atteint la destination (ici `d_0 == f`)  
-    on a trouvé la distance la plus courte, qui est la marque de `f`
+  * on atteint la destination (ici $d_0 == f$)  
+    on a trouvé la distance la plus courte, qui est la marque de $f$
   * ou bien s'il n'y a plus d'arête qui satisfasse le critère  
-    ça signifie que `f` n'est pas atteignable depuis `a`
+    ça signifie que $f$ n'est pas atteignable depuis $a$
 
 
 ### question
@@ -494,14 +525,14 @@ digression, mais 
 
 * c'est facile d'écrire par accident un algo qui boucle  
   (qui ne termine jamais)
-* lorsque ça arrive dans un notebook, l'affichage ressemble à `In [*]` comme ci-dessous:
-    * il faut alors **interrompre le kernel**
-    * on peut le faire par le menu *Kernel* → *Interrupt*
-    * ou encore en tapant 2 fois la lettre 'i' en mode Commande
+* lorsque ça arrive dans le notebook, l'affichage ressemble à `In [*]` comme ci-contre
+* il faut alors **interrompre le kernel**
+* on peut le faire par le menu *Kernel* → *Interrupt*
+* ou encore en tapant 2 fois la lettre 'i' en mode Commande
 
-    <img src="media/endless-loop.png" />
 
-* lorsque que a arrive en ligne de commande (bash), il suffit de faire `Ctrl + C` pour interrompre le calcul.
+<img src="media/endless-loop.png" />
+
 
 Rappel :
 
@@ -525,7 +556,7 @@ je décortique un peu pour ceux qui sont moins à l'aise
 
 quelques rappels/astuces qui peuvent servir dans ce contexte :
 
-```python
+```{code-cell} ipython3
 # on rappelle comment itérer sur un dictionnaire
 
 # d'abord pour lister toutes les arêtes sortant d'un sommet
@@ -544,7 +575,7 @@ for d, w in adj.items():
     print(s, '-', w, '→', d)
 ```
 
-```python
+```{code-cell} ipython3
 # du coup pour itérer sur toutes les arêtes
 
 for s, adj in G.items():
@@ -552,7 +583,7 @@ for s, adj in G.items():
         print(f"{s=} → {d=}")
 ```
 
-```python
+```{code-cell} ipython3
 # math.inf matérialise l'infini
 import math
 
@@ -565,51 +596,50 @@ pour commencer la structure générale de la fonction ressemble à ceci
 
 **à ne pas prendre au pied de de la lettre**, vous pouvez/devez changer/renommer/faire autrement comme vous le sentez...
 
-```python
-def shortest_distance(graph, v1, v2):
 
-    # initialisation
-    # on se définit une variable locale à la fonction
-    # qui matérialise le marquage
+    def shortest_distance(graph, v1, v2):
 
-    visited = ...
+        # initialisation
+        # on se définit une variable locale à la fonction
+        # qui matérialise le marquage
 
-    # ensuite on fait une boucle jusqu'à ce que la condition soit remplie
-    while True:
+        visited = ...
 
-        # les arêtes qui satisfont le critère 
-        edges = set()
+        # ensuite on fait une boucle jusqu'à ce que la condition soit remplie
+        while True:
 
-        # on énumère toutes les arêtes, et on ajoute dans
-        # edges celles qui satisfont le critère
-        # for ...
-        #    for ...
-        #      if ...
-        #         edges.add(...)
-        #  
+            # les arêtes qui satisfont le critère 
+            edges = set()
 
-        # si on n'a aucune arête c'est que c'est raté
-        if not edges:
-            return
+            # on énumère toutes les arêtes, et on ajoute dans
+            # edges celles qui satisfont le critère
+            # for ...
+            #    for ...
+            #      if ...
+            #         edges.add(...)
+            #  
 
-        # sinon on trouve la meilleure
-        shortest_length = math.inf
-        shortest_vertex = None
-        for edge in edges:
-            ... # trouver la plus courte
-                # et mémoriser le sommet correspondant
+            # si on n'a aucune arête c'est que c'est raté
+            if not edges:
+                return
 
-        # marquer le sommet correspondant
+            # sinon on trouve la meilleure
+            shortest_length = math.inf
+            shortest_vertex = None
+            for edge in edges:
+                ... # trouver la plus courte
+                    # et mémoriser le sommet correspondant
 
-        # regarder si c'est le sommet 
-        if shortest_vertex == v2:
-            return ...
-```
+            # marquer le sommet correspondant
+
+            # regarder si c'est le sommet 
+            if shortest_vertex == v2:
+                return ...
 
 
 ### exo #4
 
-```python
+```{code-cell} ipython3
 # à vous d'écrire une fonction
 # comme ceci
 
@@ -633,25 +663,70 @@ def shortest_distance(graph, v1, v2):
 
 pour vérifier si votre code fonctionne :
 
+```{code-cell} ipython3
+# une version qui marche pour comparer avec votre résultat
+from graphs import shortest_distance1
+```
 
-```python
->>> shortest_distance(G, 'a', 'f')
-23
->>> shortest_distance(G, 'a', 'e')
-20
->>> shortest_distance(G, 'c', 'b')
-None
+```{code-cell} ipython3
+# vérifiez que G est bien toujours notre graphe de référence
+G
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+shortest_distance(G, 'a', 'f') == 23
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+shortest_distance(G, 'a', 'e') == 20
+```
+
+```{code-cell} ipython3
+:cell_style: center
+
+shortest_distance(G, 'c', 'b') is None
 ```
 
 ***
+
+
+#### vérification avec un autre graphe en entrée
+
+```{code-cell} ipython3
+:cell_style: split
+
+G2 = parse_graph1('data/graph2.csv')
+
+G2
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+
+to_graphviz(G2, "dot")
+```
+
+```{code-cell} ipython3
+shortest_distance1(G2, 'v1', 'v6')
+```
 
 
 ### exo #5 : amélioration
 
 comment pourriez-vous adapter cet algorithme pour retourner aussi le chemin ?
 
+```{code-cell} ipython3
+from graphs import shortest_path1
 
-```python
+shortest_path1(G, 'a', 'f')
+```
+
+```{code-cell} ipython3
 def shortest_path(graph, v1, v2):
     """
     same as shortest_distance but returns a tuple
@@ -663,12 +738,10 @@ def shortest_path(graph, v1, v2):
     ...
 ```
 
-Attendu:
-
-```python
->>> shortest_path(G, 'a', 'f')
-(23, ['a', 'c', 'f'])
+```{code-cell} ipython3
+# je vous laisse le soin d'écrire le code pour tester
 ```
+
 
 ### un graphe un peu plus réaliste
 
@@ -683,24 +756,28 @@ j'ai choisi ces données car le graphe est de taille moyenne (71 sommets) mais r
 
 remarquez que les données sont issues d'un dépôt 100% Java; le format de données ne dépend pas du tout du langage qu'on utiliser pour les traiter, bien entendu
 
-```python
+```{code-cell} ipython3
 thrones_url = "https://raw.githubusercontent.com/pupimvictor/NetworkOfThrones/master/stormofswords.csv"
 ```
 
-**Remarque**
+on va profiter de l'occasion pour voir comment aller chercher des données sur Internet
 
-Pour le télécharger, on pourrait utiliser quelque chose comme le code ci-dessous. N'oubliez pas d'installer `requests` comme indiqué dans les commentaires:
-
-```python
+```{code-cell} ipython3
 # si nécessaire, installer requests avec 
 # $ pip install requests 
-import requests
 
+import requests
+```
+
+```{code-cell} ipython3
 # voici l'idiome qui permet d'aller chercher 
 # une page web à partir de son URL
+
 get_request = requests.get(thrones_url)
 text_data = get_request.text
+```
 
+```{code-cell} ipython3
 # voilà à quoi ressemble le (début du) texte
 # vous pouvez vérifier en pointant une nouvelle fenêtre 
 # de votre navigateur vers l'url en question
@@ -714,57 +791,140 @@ il se trouve toutefois que
 * nous avons écrit un code `parse_graph` qui traduit **le contenu d'un fichier** en un graphe, mais on n'a pas le code qui traduirait **une chaine** en un graphe 
 * en plus, la page web contient une première ligne en trop pour nous, il s'agit du nom des colonnes (vous vous rappelez peut-être le cours sur pandas, c'est fréquent pour un fichier `.csv` de contenir des métadata de ce genre dans les premières lignes)
 
-donc bref, pour ne pas nous compliquer la vie, on va **créer un fichier local** avec le contenu du texte, moins la première ligne. Pour vous simplifier la vie, on a mis le fichier dans `thrones.csv` dans ce repo.
+donc bref, pour ne pas nous compliquer la vie, on va **créer un fichier local** avec le contenu du texte, moins la première ligne
 
 une autre approche aurait pu être de re-factorer le code de `parse_graph`, pour permettre le parsing à partir d'une chaine, mais bon on ne va pas se compliquer la vie ici…; en plus ça nous donne une occasion d'utiliser ce qu'on a appris sur la création des fichiers
 
-```python
+```{code-cell} ipython3
+# écrivez le code qui sauve le contenu
+# de la page web, sans la première ligne, 
+# dans le fichier data/thrones.csv
+# (le répertoire data/ existe déjà)
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+# pour vérifier le contenu 
+# on regarde les 5 premières lignes
+# qui devraient être
+# Aemon,Grenn,5
+# Aemon,Samwell,31
+# Aerys,Jaime,18
+# Aerys,Robert,6
+# Aerys,Tyrion,5
+
+with open("data/thrones.csv") as feed:
+    counter = 0
+    for line in feed:
+        print(line, end="")
+        counter += 1
+        if counter >= 5:
+            break
+```
+
+
+**Remarque**
+
+* on verra bientôt des façons plus pythoniques de faire ça avec `enumerate()`
+
+
+**Remarque**
+
+* on pourrait aussi faire plus simplement   
+  `!head -5 data/thrones.csv`  
+  qui est une façon de lancer depuis le notebook  
+  une commande du terminal
+
+```{code-cell} ipython3
 # une fois que le fichier local est OK, on peut utiliser notre
 # code pour faire des calculs dans ce graphe
 
->>> thrones = parse_graph("data/thrones.csv")
->>> len(thrones)
-71
+thrones = parse_graph1("data/thrones.csv")
+
+len(thrones)
 ```
 
 
 mais attention, comme on l'a vu plus haut ça signifie qu'il y a **au moins** 71 personnages, mais ça peut être plus en fait...
 
-```python
+```{code-cell} ipython3
+:cell_style: split
+
 # exercice optionnel
 # écrivez une fonction qui calcule le 
 # nombre réel de sommets dans le graphe
 ```
 
+```{code-cell} ipython3
+# on peut maintenant voir un peu à quoi il ressemble
+# enfin, si on a graphviz installé
+# et sinon, eh bien ce n'est pas grave !
+
+try:
+    visual_thrones = to_graphviz(thrones)
+    visual_thrones.attr(size='28')
+    visual_thrones
+except Exception as exc:
+    print("too bad:", exc)
+```
+
 et maintenant on peut faire des calculs dans ce graphe
+
+lorsque votre code fonctionne vous pouvez enlever les `1` pour remplacer par exemple `reachables1` (mon code) par `reachables` tout court (votre code)
+
 
 #### atteignabilité
 
-```python
->>> # ce personnage semble assez central
->>> len(reachables(thrones, 'Eddard'))
-88
->>> # pas mal non plus
->>> len(reachables(thrones, 'Bran'))
-42
->>> len(reachables(thrones, 'Davos'))
-3
->>> len(reachables(thrones, 'Shireen'))
-4
+```{code-cell} ipython3
+:cell_style: split
+
+# ce personnage semble assez central
+len(reachables1(thrones, 'Eddard'))
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+# pas mal non plus
+len(reachables1(thrones, 'Bran'))
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+len(reachables1(thrones, 'Davos'))
+```
+
+```{code-cell} ipython3
+:cell_style: split
+
+len(reachables1(thrones, 'Shireen'))
 ```
 
 #### plus court chemin
 
-```python
->>> shortest_path(thrones, 'Eddard', 'Doran')
-(15, ['Eddard', 'Catelyn', 'Tyrion', 'Doran'])
->>> shortest_path2(thrones, 'Eddard', 'Margaery')
-(17, ['Eddard', 'Sansa', 'Renly', 'Margaery'])
->>> shortest_path(thrones, 'Margaery', 'Eddard')
-None
->>> shortest_path1(thrones, 'Daenerys', 'Karl')
-(38, ['Daenerys', 'Viserys', 'Tyrion', 'Janos', 'Mance', 'Craster', 'Karl'])
+```{code-cell} ipython3
+:cell_style: center
+
+# des plus courts chemins
+shortest_path1(thrones, 'Eddard', 'Doran')
 ```
+
+```{code-cell} ipython3
+:cell_style: center
+
+shortest_path1(thrones, 'Eddard', 'Margaery')
+```
+
+```{code-cell} ipython3
+shortest_path1(thrones, 'Margaery', 'Eddard') is None
+```
+
+```{code-cell} ipython3
+shortest_path1(thrones, 'Daenerys', 'Karl')
+```
+
 
 ## optimisation (optionnel / avancé)
 
@@ -783,43 +943,23 @@ par contre, le lecteur affuté aura remarqué la chose suivante :
 
 ce qui peut nous laisser penser que, dans le cas de graphes plus substanciels que nos exemples jusqu'ici, l'algorithme risque d'avoir des performances sous-optimales
 
-🐶🐱🐰 TODO
-
-🐶🐱🐰 TODO
-
-🐶🐱🐰 TODO
 
 ### un graphe plus gros
 
-**exercice**: pour un entier `n`, écrire une fonction `planar(n)`  
+**exercice**: pour un entier $n$, écrire une fonction `planar(n)`  
 qui construit un graphe:  
-* qui contient `n^2` sommets  
-  chacun étiqueté par un couple `(i, j), i ∈ [1..n], j ∈ [1..n]`
+* qui contient $n^2$ sommets  
+  chacun étiqueté par un couple $(i, j), i\in[1..n], j\in[1..n]$
 * où chaque sommet est connecté à ses voisins immédiats  
-  * `(i, j) -i-> (i+1, j)` si `i<n`
-  * `(i, j) -i-> (i, j+1)` si `j<n`
+  * $(i, j) \xrightarrow{i} (i+1, j)$ si $i<n$
+  * $(i, j) \xrightarrow{j} (i, j+1)$ si $j<n$
 
 
 ***
 
-```python
->>> planar(4)
-{(1, 1): {(2, 1): 1, (1, 2): 1},
- (1, 2): {(2, 2): 1, (1, 3): 2},
- (1, 3): {(2, 3): 1, (1, 4): 3},
- (1, 4): {(2, 4): 1},
- (2, 1): {(3, 1): 2, (2, 2): 1},
- (2, 2): {(3, 2): 2, (2, 3): 2},
- (2, 3): {(3, 3): 2, (2, 4): 3},
- (2, 4): {(3, 4): 2},
- (3, 1): {(4, 1): 3, (3, 2): 1},
- (3, 2): {(4, 2): 3, (3, 3): 2},
- (3, 3): {(4, 3): 3, (3, 4): 3},
- (3, 4): {(4, 4): 3},
- (4, 1): {(4, 2): 1},
- (4, 2): {(4, 3): 2},
- (4, 3): {(4, 4): 3},
- (4, 4): {}}
+```{code-cell} ipython3
+from graphs import planar1
+planar1(4)
 ```
 
 ***
@@ -839,9 +979,10 @@ celle-ci est exécutée plusieurs fois, on prend ensuite la moyenne
 
 pour faire la même chose en Python pur, voyez .. le module `timeit`
 
+
 ### mesurons: `n=10` et plus
 
-```python
+```{code-cell} ipython3
 # ça passe pas trop mal
 # mais 3ms c'est quand même beaucoup pour 100 sommets
 N = 10
@@ -849,7 +990,7 @@ P = planar1(N)
 %timeit shortest_path1(P, (1, 1), (N, N))
 ```
 
-```python
+```{code-cell} ipython3
 # 4 fois plus de sommets,
 # trajet environ deux fois plus long
 # de l'ordre de 45 ms
@@ -859,7 +1000,7 @@ P = planar1(N)
 %timeit shortest_path1(P, (1, 1), (N, N))
 ```
 
-```python
+```{code-cell} ipython3
 # encore *2 
 # del'ordre de 11s !
 # bref c'est inutilisable en vrai !
@@ -891,7 +1032,7 @@ il existe aussi des *magic* pour cela, mais par expérience elles sont d'un abor
 aussi on va avoir recours au terminal et à l'interpréteur;  
 on écrit un script `slow.py` qui contient ceci
 
-```python
+```{code-cell} ipython3
 with open('slow.py') as f:
     for line in f:
         print(line, end='')
@@ -919,26 +1060,26 @@ une fois qu'on a vu ça, voyez-vous une façon de récrire `shortest_path` pour 
 
 voici les résultats que j'obtiens à présent avec une implémentation alternative et plus efficace:
 
-```python
+```{code-cell} ipython3
 # on va voir que cette version 2 est bien plus efficace
 from graphs import shortest_path2
 ```
 
-```python
+```{code-cell} ipython3
 # environ 500 µs, vs 3ms
 N = 10
 P = planar1(N)
 %timeit shortest_path2(P, (1, 1), (N, N))
 ```
 
-```python
+```{code-cell} ipython3
 # 3ms vs 45 ms
 N = 20
 P = planar1(N)
 %timeit shortest_path2(P, (1, 1), (N, N))
 ```
 
-```python
+```{code-cell} ipython3
 # 250 ms vs 11s !
 # ça devient utilisable
 N = 80
@@ -946,7 +1087,7 @@ P = planar1(N)
 %timeit shortest_path2(P, (1, 1), (N, N))
 ```
 
-```python
+```{code-cell} ipython3
 # 1.5s pour un graphe de 22500 noeuds
 # c'est long, mais mieux que la v1 en tous cas
 N = 150
