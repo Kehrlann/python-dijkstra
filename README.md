@@ -187,7 +187,7 @@ pour éviter les inconvénients des listes et des matrices, on va représenter u
 
 ```python
 # pour notre graphe on veut construire 
-G = {'a': {'b': 7, 'd': 9, 'c': 14},
+g = {'a': {'b': 7, 'd': 9, 'c': 14},
      'b': {'d': 10, 'e': 15},
      'c': {'d': 2, 'f': 9},
      'd': {'e': 11},
@@ -240,6 +240,8 @@ Comparer le résultat à notre graphe G ci-dessus:
    'e': {'f': 6}}
 ```
 
+Notez bien ce graph, c'est le graphe de référence pour les exemples de cet exercice, stocké dans `g = `.
+
 
 ## nombre de sommets
 
@@ -249,12 +251,12 @@ et dans ce cas-là, avec notre structure de données, ça signifie que ce sommet
 
 ```python
 >>> # 'f' est bien un sommet, mais pourtant
->>> G = {'a': {'b': 7, 'd': 9, 'c': 14},
+>>> g = {'a': {'b': 7, 'd': 9, 'c': 14},
      'b': {'d': 10, 'e': 15},
      'c': {'d': 2, 'f': 9},
      'd': {'e': 11},
      'e': {'f': 6}}
->>> G['f']
+>>> g['f']
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 KeyError: 'f'
@@ -291,6 +293,19 @@ Le résultat attendu:
 6
 ```
 
+Attention! Les graphes peuvent avoir des cycles, par exemple: `a -> b -> c -> a`, soit:
+
+```python
+{
+  'a': { 'b': 1 },
+  'b': { 'c': 1 },
+  'c': { 'a': 1 }
+}
+```
+
+Si votre fonction a une erreur, elle pourrait partir en "boucle infinie", et le grader ne finira jamais. En appuyant sur `Ctrl + C` dans le terminal, vous pouvez l'interrompre.
+
+
 ## atteignabilité
 
 
@@ -319,7 +334,7 @@ On devra trouver:
 >>> reachables(reach, "f")
 {'e', 'f'}
 ```
-
+  
 ### la difficulté
 
 
@@ -405,35 +420,46 @@ vous pouvez vérifier visuellement en comparant vos résultats avec ceux qu'on a
 {'e', 'f'}
 ```
 
+On peut aussi écrire un petit test, qu'on mettra par exemple dans un block `if __name__ == "__main__"`, qui nous permet d'essayer rapidement:
+
 ```python
-# comment écrire un petit test plus informatif
-# sur le premier graphe témoin
+if __name__ == "__main__":
+  # comment écrire un petit test plus informatif
+  # sur le premier graphe témoin
 
-# on énumère à la main les sommets à tester 
-# et les résultats attendus
-G = {'a': {'b': 7, 'd': 9, 'c': 14},
-     'b': {'d': 10, 'e': 15},
-     'c': {'d': 2, 'f': 9},
-     'd': {'e': 11},
-     'e': {'f': 6}}
+  # on énumère à la main les sommets à tester 
+  # et les résultats attendus
+  g = {'a': {'b': 7, 'd': 9, 'c': 14},
+      'b': {'d': 10, 'e': 15},
+      'c': {'d': 2, 'f': 9},
+      'd': {'e': 11},
+      'e': {'f': 6}}
 
-G_tests = [
-    ('a', {'a', 'b', 'c', 'd', 'e', 'f'}),
-    ('b', {'b', 'd', 'e', 'f'}),
-    ('c', {'c', 'd', 'e', 'f'}),
-    ('d', {'d', 'e', 'f'}),
-    ('e', {'e', 'f'}),
-    ('f', {'f'}),
-]
+  g_tests = [
+      ('a', {'a', 'b', 'c', 'd', 'e', 'f'}),
+      ('b', {'b', 'd', 'e', 'f'}),
+      ('c', {'c', 'd', 'e', 'f'}),
+      ('d', {'d', 'e', 'f'}),
+      ('e', {'e', 'f'}),
+      ('f', {'f'}),
+  ]
 
-# on vérifie pour chacun qu'on
-# obtient bien le résultat attendu
-for (s, expected) in G_tests:
-    computed = reachables(G, s)
-    if computed != expected:
-        print(f"ERROR found {computed} != {expected}")
-    else:
-        print(f"depuis {s} → {computed}")
+  # on vérifie pour chacun qu'on
+  # obtient bien le résultat attendu
+  has_error = False
+  for (s, expected) in g_tests:
+      computed = reachables(g, s)
+      if computed != expected:
+          has_error = True
+          print(f"ERROR found {computed} != {expected}")
+      else:
+          print(f"depuis {s} → {computed}")
+  
+  print("~~~~~~~")
+  if has_error:
+    print("Au moins une erreur trouvée!")
+  else:
+    print("Tout fonctionne")
 ```
 
 ## plus court chemin
@@ -535,7 +561,7 @@ quelques rappels/astuces qui peuvent servir dans ce contexte :
 s = 'b'
 
 # adj pour adjacency
-adj = G[s]
+adj = g[s]
 
 # on itère sur les arêtes sortant du vertex
 # d pour destination
@@ -635,18 +661,31 @@ pour vérifier si votre code fonctionne :
 
 
 ```python
->>> shortest_distance(G, 'a', 'f')
+>>> shortest_distance(g, 'a', 'f')
 23
->>> shortest_distance(G, 'a', 'e')
+>>> shortest_distance(g, 'a', 'e')
 20
->>> shortest_distance(G, 'c', 'b')
+>>> shortest_distance(g, 'c', 'b')
 None
+```
+
+A vous de voir si vous souhaitez écrire un petit test automatique comme dans l'exemple "reachables".
+
+
+Attention, dans certains graphes, la plus courte distance n'est pas celle du chemin avec le moins de sommets!
+Par exemple:
+
+```python
+{'a': {'b': 1, 'e': 10},
+    'b': {'c': 1},
+    'c': {'d': 1},
+    'd': {'e': 1}}
 ```
 
 ***
 
 
-### exo #5 : amélioration
+### exo #5 (optionnel): amélioration
 
 comment pourriez-vous adapter cet algorithme pour retourner aussi le chemin ?
 
@@ -666,8 +705,12 @@ def shortest_path(graph, v1, v2):
 Attendu:
 
 ```python
->>> shortest_path(G, 'a', 'f')
+>>> shortest_path(g, 'a', 'f')
 (23, ['a', 'c', 'f'])
+>>> shortest_path(g, 'a', 'e')
+(20, ['a', 'd', 'e'])
+>>> shortest_path(g, 'c', 'b')
+None
 ```
 
 ### un graphe un peu plus réaliste
@@ -722,7 +765,7 @@ une autre approche aurait pu être de re-factorer le code de `parse_graph`, pour
 # une fois que le fichier local est OK, on peut utiliser notre
 # code pour faire des calculs dans ce graphe
 
->>> thrones = parse_graph("data/thrones.csv")
+>>> thrones = parse_graph("thrones.csv")
 >>> len(thrones)
 71
 ```
@@ -758,11 +801,11 @@ et maintenant on peut faire des calculs dans ce graphe
 ```python
 >>> shortest_path(thrones, 'Eddard', 'Doran')
 (15, ['Eddard', 'Catelyn', 'Tyrion', 'Doran'])
->>> shortest_path2(thrones, 'Eddard', 'Margaery')
+>>> shortest_path(thrones, 'Eddard', 'Margaery')
 (17, ['Eddard', 'Sansa', 'Renly', 'Margaery'])
 >>> shortest_path(thrones, 'Margaery', 'Eddard')
 None
->>> shortest_path1(thrones, 'Daenerys', 'Karl')
+>>> shortest_path(thrones, 'Daenerys', 'Karl')
 (38, ['Daenerys', 'Viserys', 'Tyrion', 'Janos', 'Mance', 'Craster', 'Karl'])
 ```
 
@@ -783,13 +826,15 @@ par contre, le lecteur affuté aura remarqué la chose suivante :
 
 ce qui peut nous laisser penser que, dans le cas de graphes plus substanciels que nos exemples jusqu'ici, l'algorithme risque d'avoir des performances sous-optimales
 
-🐶🐱🐰 TODO
+---
+---
+---
 
-🐶🐱🐰 TODO
+### Pour les amoureux de l'algo: un graphe plus gros
 
-🐶🐱🐰 TODO
-
-### un graphe plus gros
+> Attention! Cette partie est complètement optionnelle, pas testée
+> et pas re-redigée au propre. Ne vous y aventurez que si vous êtes
+> super motivés.
 
 **exercice**: pour un entier `n`, écrire une fonction `planar(n)`  
 qui construit un graphe:  
@@ -797,7 +842,7 @@ qui construit un graphe:
   chacun étiqueté par un couple `(i, j), i ∈ [1..n], j ∈ [1..n]`
 * où chaque sommet est connecté à ses voisins immédiats  
   * `(i, j) -i-> (i+1, j)` si `i<n`
-  * `(i, j) -i-> (i, j+1)` si `j<n`
+  * `(i, j) -j-> (i, j+1)` si `j<n`
 
 
 ***
@@ -828,7 +873,7 @@ qui construit un graphe:
 ### `%timeit`
 
 
-on va utiliser la *magic* `timeit`:
+on va utiliser la *magic* `timeit` dans un notebook:
 * une *magic* est une instruction pour IPython (pas reconnu par Python standard)
 * qui commence par un ou deux `%`
   * un seul `%`: s'applique à cette ligne
