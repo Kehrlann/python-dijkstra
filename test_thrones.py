@@ -17,6 +17,8 @@ class TestThrones(unittest.TestCase):
     def test_shortest_distance(self):
         graph = parse_graph("thrones.csv")
         self.assertEqual(shortest_distance(graph, 'Eddard', 'Doran'), 15)
+        self.assertEqual(shortest_distance(graph, 'Eddard', 'Margaery'), 17)
+        self.assertEqual(shortest_distance(graph, 'Daenerys', 'Karl'), 38)
         self.assertEqual(shortest_distance(graph, 'Margery', 'Eddard'), None)
 
 if __name__ == '__main__':

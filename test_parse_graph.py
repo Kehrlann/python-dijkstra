@@ -11,7 +11,8 @@ class TestParseGraph(unittest.TestCase):
 
     def test_parse_graph(self):
         parsed = parse_graph("graph.csv")
-        self.assertEqual(parsed, expected_graph)
+        self.assertIsInstance(parsed, dict)
+        self.assertEqual(dict(parsed), expected_graph)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
